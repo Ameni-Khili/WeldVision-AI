@@ -1,0 +1,6 @@
+streamlit
+ultralytics
+plotly
+opencv-python-headless
+pandas
+Pillow
