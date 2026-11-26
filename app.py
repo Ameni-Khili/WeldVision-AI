@@ -22,7 +22,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-MODEL_PATH = "/content/runs/segment/train-5/weights/best.pt"
+MODEL_PATH = "best.pt"
 RUN_DIR = "/content/runs/segment/train-5"
 
 CLASS_NAMES = [
