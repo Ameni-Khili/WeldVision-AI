@@ -604,8 +604,7 @@ csv_data,
 "welding_detection.csv",
 "text/csv"
                 )
-
-        else:
+else:
          st.success(
          "No objects detected at the selected confidence threshold."
                 )
