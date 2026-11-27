@@ -585,7 +585,7 @@ elif page == "🔍 AI Detection":
 
 st.plotly_chart(fig, use_container_width=True)
 
-            details = pd.DataFrame({  
+details = pd.DataFrame({ 
                     "Class": data["names"],
                     "Confidence (%)": [
                         round(score * 100, 2)
