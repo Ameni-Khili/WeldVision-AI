@@ -583,7 +583,7 @@ elif page == "🔍 AI Detection":
             key="download_inspection_pdf"
         )
 
-                st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
                 details = pd.DataFrame({
                     "Class": data["names"],
