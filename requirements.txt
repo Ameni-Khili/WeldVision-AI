@@ -4,3 +4,4 @@ plotly
 opencv-python-headless
 pandas
 Pillow
+reportlab
