@@ -56,7 +56,7 @@ st.markdown("""
     background-color: #101827;
     color: #F1F5F9;
 }
-[data-testid="stSidebar"] {
+[data-testid="stSidebar"] { 
     background-color: #172235;
 }
 h1, h2, h3 {
@@ -484,7 +484,7 @@ elif page == "🔍 AI Detection":
                 })
 
         # Display latest result
-        data = st.session_state.last_result
+       data = st.session_state.get("last_result")
 
         if data is not None:
 
