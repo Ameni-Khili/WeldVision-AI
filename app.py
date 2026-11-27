@@ -504,6 +504,8 @@ elif page == "📊 Defect Analytics":
         )
 
 # ==========================================
+
+# ==========================================
 # PAGE 4 - MODEL PERFORMANCE
 # ==========================================
 
@@ -512,139 +514,96 @@ elif page == "🧠 Model Performance":
     st.subheader("🧠 Model Performance")
 
     st.write("YOLOv8n-Seg Training Evaluation")
+    st.success("Displaying saved evaluation results - Train 5")
 
-    results_file = os.path.join(
-        RUN_DIR,
-        "results.csv"
+    # Overall Model Metrics
+    st.markdown("### Overall Performance")
+
+    metrics = [
+        ("Box Precision", 66.6),
+        ("Box Recall", 56.1),
+        ("Box mAP50", 61.4),
+        ("Box mAP50-95", 34.9),
+        ("Mask Precision", 62.5),
+        ("Mask Recall", 53.3),
+        ("Mask mAP50", 55.3),
+        ("Mask mAP50-95", 25.0)
+    ]
+
+    cols = st.columns(4)
+
+    for i, (label, value) in enumerate(metrics):
+        cols[i % 4].metric(
+            label,
+            f"{value:.1f}%"
+        )
+
+    st.divider()
+
+    # Mask Performance by Class
+    st.markdown("### Mask mAP50 by Welding Class")
+
+    class_results = {
+        "Welding Class": [
+            "Bad Welding",
+            "Crack",
+            "Good Welding",
+            "Porosity",
+            "Reinforcement",
+            "Spatters"
+        ],
+        "mAP50 (%)": [
+            67.4,
+            50.0,
+            71.9,
+            45.8,
+            53.6,
+            43.3
+        ]
+    }
+
+    class_df = pd.DataFrame(class_results)
+
+    fig = px.bar(
+        class_df,
+        x="Welding Class",
+        y="mAP50 (%)",
+        color="mAP50 (%)",
+        text="mAP50 (%)",
+        title="Segmentation Performance by Class",
+        range_y=[0, 100]
     )
 
-    if os.path.exists(results_file):
+    fig.update_traces(texttemplate="%{text:.1f}%")
 
-        df = pd.read_csv(results_file)
-        df.columns = df.columns.str.strip()
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#101827",
+        plot_bgcolor="#101827"
+    )
 
-        last = df.iloc[-1]
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
 
-        def find_metric(keyword):
-            matches = [
-                c for c in df.columns
-                if keyword.lower() in c.lower()
-            ]
-            return matches[0] if matches else None
+    st.divider()
 
-        metrics = [
-            (
-                "Box Precision",
-                find_metric("metrics/precision(B)")
-            ),
-            (
-                "Box Recall",
-                find_metric("metrics/recall(B)")
-            ),
-            (
-                "Box mAP50",
-                find_metric("metrics/mAP50(B)")
-            ),
-            (
-                "Box mAP50-95",
-                find_metric("metrics/mAP50-95(B)")
-            ),
-            (
-                "Mask Precision",
-                find_metric("metrics/precision(M)")
-            ),
-            (
-                "Mask Recall",
-                find_metric("metrics/recall(M)")
-            ),
-            (
-                "Mask mAP50",
-                find_metric("metrics/mAP50(M)")
-            ),
-            (
-                "Mask mAP50-95",
-                find_metric("metrics/mAP50-95(M)")
-            )
-        ]
+    # Model Information
+    st.markdown("### Model Information")
 
-        cols = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
-        for i, (label, column) in enumerate(metrics):
+    col1.metric("Model", "YOLOv8n-Seg")
+    col2.metric("Number of Classes", "6")
+    col3.metric("Training Run", "Train 5")
 
-            if column is not None:
-                value = float(last[column])
+    st.info(
+        "These values are the previously recorded evaluation "
+        "results of Train 5. Original training curves are not "
+        "available because results.csv is missing."
+    )
 
-                cols[i % 4].metric(
-                    label,
-                    f"{value * 100:.2f}%"
-                )
-
-        st.divider()
-
-        st.markdown("### Training Evolution")
-
-        epoch_column = find_metric("epoch")
-
-        if epoch_column is not None:
-
-            metric_columns = [
-                c for c in df.columns
-                if "metrics/" in c
-            ]
-
-            selected = st.selectbox(
-                "Select Metric",
-                metric_columns
-            )
-
-            fig = px.line(
-                df,
-                x=epoch_column,
-                y=selected,
-                markers=True,
-                title=selected
-            )
-
-            fig.update_layout(
-                template="plotly_dark",
-                paper_bgcolor="#101827",
-                plot_bgcolor="#101827"
-            )
-
-            st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
-
-        st.markdown("### Training Curves")
-
-        plot_files = [
-            "results.png",
-            "confusion_matrix.png",
-            "MaskPR_curve.png",
-            "BoxPR_curve.png",
-            "MaskF1_curve.png",
-            "BoxF1_curve.png"
-        ]
-
-        for file in plot_files:
-
-            path = os.path.join(
-                RUN_DIR,
-                file
-            )
-
-            if os.path.exists(path):
-                st.markdown(f"**{file}**")
-                st.image(
-                    path,
-                    use_container_width=True
-                )
-
-    else:
-        st.warning(
-            "Training results.csv not found in the selected training folder."
-        )
 
 # ==========================================
 # PAGE 5 - INSPECTION HISTORY
