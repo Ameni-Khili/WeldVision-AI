@@ -483,17 +483,26 @@ elif page == "🔍 AI Detection":
                     )
                 })
 
-        # Display latest result
-       data = st.session_state.get("last_result")
+       # Display latest saved result
+data = st.session_state.get("last_result")
 
-        if data is not None:
+if data is not None:
 
-            with col2:
-                st.markdown("### Segmentation Result")
-                st.image(
-                    data["image"],
-                    use_container_width=True
-                )
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### Original Image")
+        st.image(
+            data["original_image"],
+            use_container_width=True
+        )
+
+    with col2:
+        st.markdown("### Segmentation Result")
+        st.image(
+            data["image"],
+            use_container_width=True
+        )
 
             st.divider()
             st.markdown("### 📊 Inspection Results")
