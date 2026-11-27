@@ -605,7 +605,7 @@ csv_data,
 "text/csv"
                 )
 
-else:
+        else:
 st.success(
 "No objects detected at the selected confidence threshold."
                 )
