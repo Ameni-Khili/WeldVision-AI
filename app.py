@@ -471,6 +471,7 @@ elif page == "🔍 AI Detection":
                         "average_confidence": 0.0
                     }
 
+
                 # Store history using consistent lowercase keys.
                 st.session_state.history.append({
                     "date": inspection_time,
@@ -483,62 +484,104 @@ elif page == "🔍 AI Detection":
                     )
                 })
 
-       # Display latest saved result
-data = st.session_state.get("last_result")
+    # Display latest saved result (outside uploaded_file)
+    data = st.session_state.get("last_result")
 
-if data is not None:
+    if data is not None:
 
-    col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-    with col1:
-        st.markdown("### Original Image")
-        st.image(
-            data["original_image"],
-            use_container_width=True
-        )
-
-    with col2:
-        st.markdown("### Segmentation Result")
-        st.image(
-            data["image"],
-            use_container_width=True
-        )
-
-            st.divider()
-            st.markdown("### 📊 Inspection Results")
-
-            c1, c2, c3 = st.columns(3)
-
-            c1.metric("Total Detections", data["detections"])
-            c2.metric("Detected Defects", data["defects"])
-            c3.metric(
-                "Average Confidence",
-                f'{data["average_confidence"] * 100:.2f}%'
+        with col1:
+            st.markdown("### Original Image")
+            st.image(
+                data["original_image"],
+                use_container_width=True
             )
 
-            if data["detections"] > 0:
+        with col2:
+            st.markdown("### Segmentation Result")
+            st.image(
+                data["image"],
+                use_container_width=True
+            )
 
-                st.markdown("### Defect Distribution")
+        st.divider()
+        st.markdown("### 📊 Inspection Results")
 
-                df = pd.DataFrame(
-                    list(data["counts"].items()),
-                    columns=["Class", "Count"]
-                )
+        c1, c2, c3 = st.columns(3)
 
-                fig = px.bar(
-                    df,
-                    x="Class",
-                    y="Count",
-                    color="Class",
-                    text="Count",
-                    title="Detected Welding Classes"
-                )
+        c1.metric("Total Detections", data["detections"])
+        c2.metric("Detected Defects", data["defects"])
+        c3.metric(
+            "Average Confidence",
+            f'{data["average_confidence"] * 100:.2f}%'
+        )
 
-                fig.update_layout(
-                    template="plotly_dark",
-                    paper_bgcolor="#101827",
-                    plot_bgcolor="#101827"
-                )
+        if data["detections"] > 0:
+
+            st.markdown("### Defect Distribution")
+
+            df = pd.DataFrame(
+                list(data["counts"].items()),
+                columns=["Class", "Count"]
+            )
+
+            fig = px.bar(
+                df,
+                x="Class",
+                y="Count",
+                color="Class",
+                text="Count",
+                title="Detected Welding Classes"
+            )
+
+            fig.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#101827",
+                plot_bgcolor="#101827"
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            details = pd.DataFrame({
+                "Class": data["names"],
+                "Confidence (%)": [
+                    round(score * 100, 2)
+                    for score in data["scores"]
+                ]
+            })
+
+            st.markdown("### Detection Details")
+            st.dataframe(details, use_container_width=True)
+
+            csv_data = details.to_csv(index=False).encode("utf-8")
+
+            st.download_button(
+                "⬇️ Download Detection Results CSV",
+                csv_data,
+                "welding_detection.csv",
+                "text/csv"
+            )
+
+        else:
+            st.success(
+                "No objects detected at the selected confidence threshold."
+            )
+
+        st.divider()
+        st.markdown("### 📄 Inspection Report")
+
+        pdf_data = generate_pdf_report(data)
+
+        st.download_button(
+            label="📥 Download Inspection Report (PDF)",
+            data=pdf_data,
+            file_name="WeldVision_Inspection_Report.pdf",
+            mime="application/pdf",
+            type="primary",
+            use_container_width=True,
+            key="download_inspection_pdf"
+        )
 
                 st.plotly_chart(fig, use_container_width=True)
 
