@@ -606,8 +606,8 @@ csv_data,
                 )
 
         else:
-st.success(
-"No objects detected at the selected confidence threshold."
+         st.success(
+         "No objects detected at the selected confidence threshold."
                 )
 
 # PDF inspection report
