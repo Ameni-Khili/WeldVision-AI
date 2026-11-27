@@ -593,7 +593,7 @@ details = pd.DataFrame({
                     ]
                 })
 
- st.markdown("### Detection Details")
+st.markdown("### Detection Details")
                 st.dataframe(details, use_container_width=True)
 
                 csv_data = details.to_csv(index=False).encode("utf-8")
