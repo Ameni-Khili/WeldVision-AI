@@ -598,11 +598,11 @@ st.dataframe(details, use_container_width=True)
 
 csv_data = details.to_csv(index=False).encode("utf-8")
 
-                st.download_button(
-                    "⬇️ Download Detection Results CSV",
-                    csv_data,
-                    "welding_detection.csv",
-                    "text/csv"
+st.download_button(
+"⬇️ Download Detection Results CSV",
+csv_data,
+"welding_detection.csv",
+"text/csv"
                 )
 
             else:
