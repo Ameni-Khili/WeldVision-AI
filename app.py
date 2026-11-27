@@ -1,10 +1,4 @@
-from pathlib import Path
-p=Path('/mnt/data/Pasted text.txt')
-s=p.read_text()
-# clean imports
-start=s.index('import streamlit as st')
-end=s.index('# ==========================================\n# 1. CONFIGURATION')
-imports='''import streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -29,11 +23,142 @@ from reportlab.platypus import (
     Image as RLImage
 )
 
-'''
-s=imports+s[end:]
-# Insert PDF helper before PAGE 1
-marker='# ==========================================\n# PAGE 1 - OVERVIEW'
-helper='''# ==========================================
+# ==========================================
+# 1. CONFIGURATION
+# ==========================================
+
+st.set_page_config(
+    page_title="WeldVision AI",
+    page_icon="🏭",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+MODEL_PATH = "best.pt"
+RUN_DIR = "/content/runs/segment/train-5"
+
+CLASS_NAMES = [
+    "Bad Welding",
+    "Crack",
+    "Good Welding",
+    "Porosity",
+    "Reinforcement",
+    "Spatters"
+]
+
+# ==========================================
+# 2. CUSTOM DESIGN
+# ==========================================
+
+st.markdown("""
+<style>
+.stApp {
+    background-color: #101827;
+    color: #F1F5F9;
+}
+[data-testid="stSidebar"] {
+    background-color: #172235;
+}
+h1, h2, h3 {
+    color: #F8FAFC;
+}
+p, label {
+    color: #CBD5E1;
+}
+div[data-testid="stMetric"] {
+    background-color: #1E2B40;
+    border: 1px solid #34445C;
+    padding: 18px;
+    border-radius: 12px;
+}
+div[data-testid="stMetricValue"] {
+    color: #38BDF8;
+}
+.stButton button {
+    background-color: #0284C7;
+    color: white;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+}
+hr {
+    border-color: #334155;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 3. LOAD MODEL
+# ==========================================
+
+@st.cache_resource
+def load_model():
+    if not os.path.exists(MODEL_PATH):
+        return None
+    return YOLO(MODEL_PATH)
+
+model = load_model()
+
+# ==========================================
+# 4. SESSION STATE
+# ==========================================
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+if "last_result" not in st.session_state:
+    st.session_state.last_result = None
+
+# ==========================================
+# 5. SIDEBAR NAVIGATION
+# ==========================================
+
+st.sidebar.markdown("# 🏭 WeldVision AI")
+st.sidebar.caption("Intelligent Welding Inspection")
+st.sidebar.divider()
+
+page = st.sidebar.radio(
+    "NAVIGATION",
+    [
+        "🏠 Overview",
+        "🔍 AI Detection",
+        "📊 Defect Analytics",
+        "🧠 Model Performance",
+        "📁 Inspection History"
+    ]
+)
+
+st.sidebar.divider()
+st.sidebar.markdown("### ⚙️ Model Settings")
+
+confidence = st.sidebar.slider(
+    "Confidence Threshold",
+    0.05, 0.95, 0.25, 0.05
+)
+
+st.sidebar.caption("YOLOv8n-Seg")
+st.sidebar.caption("6 Welding Classes")
+
+if model is None:
+    st.error("Model not found. Please check MODEL_PATH.")
+    st.stop()
+
+# ==========================================
+# 6. HEADER
+# ==========================================
+
+st.markdown(
+    "<h1>WeldVision AI</h1>",
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "AI-Based Welding Defect Detection & Quality Inspection"
+)
+
+st.divider()
+
+# ==========================================
 # PDF REPORT GENERATOR
 # ==========================================
 
@@ -169,14 +294,83 @@ def generate_pdf_report(data):
     return pdf_buffer.getvalue()
 
 
-'''
-s=s.replace(marker,helper+marker)
-# replace PAGE2 region
-start=s.index('# PAGE 2 - AI DETECTION')
-start=s.rfind('# ==========================================',0,start)
-end=s.index('# PAGE 3 - DEFECT ANALYTICS')
-end=s.rfind('# ==========================================',0,end)
-page2='''# PAGE 2 - AI DETECTION
+# ==========================================
+# PAGE 1 - OVERVIEW
+# ==========================================
+
+if page == "🏠 Overview":
+
+    st.subheader("🏠 Dashboard Overview")
+
+    total_inspections = len(st.session_state.history)
+
+    total_detections = sum(
+        item["detections"]
+        for item in st.session_state.history
+    )
+
+    defect_inspections = sum(
+        1 for item in st.session_state.history
+        if item["defects"] > 0
+    )
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric(
+        "Total Inspections",
+        total_inspections
+    )
+
+    col2.metric(
+        "Detected Instances",
+        total_detections
+    )
+
+    col3.metric(
+        "Inspections with Defects",
+        defect_inspections
+    )
+
+    col4.metric(
+        "Welding Classes",
+        6
+    )
+
+    st.divider()
+
+    st.subheader("System Information")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("### 🤖 AI Model")
+        st.write("Model: YOLOv8n-Seg")
+        st.write("Task: Instance Segmentation")
+        st.write("Framework: Ultralytics")
+        st.write("Model Status: Loaded")
+
+    with c2:
+        st.markdown("### 🔧 Inspection Classes")
+
+        for name in CLASS_NAMES:
+            st.markdown(f"• {name}")
+
+    st.divider()
+
+    st.subheader("Recent Inspections")
+
+    if st.session_state.history:
+        history_df = pd.DataFrame(
+            st.session_state.history
+        )
+        st.dataframe(
+            history_df.tail(10),
+            use_container_width=True
+        )
+    else:
+        st.info("No inspections yet. Go to AI Detection to start.")
+
+# PAGE 2 - AI DETECTION
 # ==========================================
 
 elif page == "🔍 AI Detection":
@@ -381,16 +575,223 @@ elif page == "🔍 AI Detection":
             )
 
 
-'''
-s=s[:start]+page2+s[end:]
-# Fix overview history fields
-s=s.replace('item["detections"]','item["detections"]')
-s=s.replace('item["defects"]','item["defects"]')
-# Replace history page references capitalized
-s=s.replace('history_df["Defects"]','history_df["defects"]')
-s=s.replace('x="Image",\n            y="Detections",\n            color="Defects",','x="image",\n            y="detections",\n            color="defects",')
-s=s.replace('x="Date",\n            y="Average Confidence",','x="date",\n            y="average_confidence",')
-# table page uses lowercase data, fine.
-out=Path('/mnt/data/app.py')
-out.write_text(s)
-print("written",len(s.splitlines()),"lines")
+# ==========================================
+# PAGE 3 - DEFECT ANALYTICS
+# ==========================================
+
+elif page == "📊 Defect Analytics":
+
+    st.subheader("📊 Welding Defect Analytics")
+
+    if not st.session_state.history:
+        st.info(
+            "Run some image inspections first to generate analytics."
+        )
+
+    else:
+
+        history_df = pd.DataFrame(
+            st.session_state.history
+        )
+
+        st.metric(
+            "Total Inspected Images",
+            len(history_df)
+        )
+
+        st.metric(
+            "Total Detected Defects",
+            int(history_df["defects"].sum())
+        )
+
+        fig = px.bar(
+            history_df,
+            x="image",
+            y="detections",
+            color="defects",
+            title="Detections by Image"
+        )
+
+        fig.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="#101827",
+            plot_bgcolor="#101827"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        fig2 = px.line(
+            history_df,
+            x="date",
+            y="average_confidence",
+            markers=True,
+            title="Average Confidence by Inspection"
+        )
+
+        fig2.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="#101827",
+            plot_bgcolor="#101827"
+        )
+
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
+# ==========================================
+
+# ==========================================
+# PAGE 4 - MODEL PERFORMANCE
+# ==========================================
+
+elif page == "🧠 Model Performance":
+
+    st.subheader("🧠 Model Performance")
+
+    st.write("YOLOv8n-Seg Training Evaluation")
+    st.success("Displaying saved evaluation results - Train 5")
+
+    # Overall Model Metrics
+    st.markdown("### Overall Performance")
+
+    metrics = [
+        ("Box Precision", 66.6),
+        ("Box Recall", 56.1),
+        ("Box mAP50", 61.4),
+        ("Box mAP50-95", 34.9),
+        ("Mask Precision", 62.5),
+        ("Mask Recall", 53.3),
+        ("Mask mAP50", 55.3),
+        ("Mask mAP50-95", 25.0)
+    ]
+
+    cols = st.columns(4)
+
+    for i, (label, value) in enumerate(metrics):
+        cols[i % 4].metric(
+            label,
+            f"{value:.1f}%"
+        )
+
+    st.divider()
+
+    # Mask Performance by Class
+    st.markdown("### Mask mAP50 by Welding Class")
+
+    class_results = {
+        "Welding Class": [
+            "Bad Welding",
+            "Crack",
+            "Good Welding",
+            "Porosity",
+            "Reinforcement",
+            "Spatters"
+        ],
+        "mAP50 (%)": [
+            67.4,
+            50.0,
+            71.9,
+            45.8,
+            53.6,
+            43.3
+        ]
+    }
+
+    class_df = pd.DataFrame(class_results)
+
+    fig = px.bar(
+        class_df,
+        x="Welding Class",
+        y="mAP50 (%)",
+        color="mAP50 (%)",
+        text="mAP50 (%)",
+        title="Segmentation Performance by Class",
+        range_y=[0, 100]
+    )
+
+    fig.update_traces(texttemplate="%{text:.1f}%")
+
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#101827",
+        plot_bgcolor="#101827"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    st.divider()
+
+    # Model Information
+    st.markdown("### Model Information")
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Model", "YOLOv8n-Seg")
+    col2.metric("Number of Classes", "6")
+    col3.metric("Training Run", "Train 5")
+
+    st.info(
+        "These values are the previously recorded evaluation "
+        "results of Train 5. Original training curves are not "
+        "available because results.csv is missing."
+    )
+
+
+# ==========================================
+# PAGE 5 - INSPECTION HISTORY
+# ==========================================
+
+elif page == "📁 Inspection History":
+
+    st.subheader("📁 Inspection History")
+
+    if st.session_state.history:
+
+        history_df = pd.DataFrame(
+            st.session_state.history
+        )
+
+        st.dataframe(
+            history_df,
+            use_container_width=True
+        )
+
+        csv = history_df.to_csv(
+            index=False
+        ).encode("utf-8")
+
+        st.download_button(
+            "⬇️ Export History CSV",
+            csv,
+            "inspection_history.csv",
+            "text/csv"
+        )
+
+        if st.button("🗑️ Clear History"):
+            st.session_state.history = []
+            st.session_state.last_result = None
+            st.rerun()
+
+    else:
+        st.info("No inspection history available yet.")
+
+# ==========================================
+# FOOTER
+# ==========================================
+
+st.divider()
+
+st.markdown(
+    "<center>WeldVision AI | YOLOv8-Seg | "
+    "Intelligent Industrial Quality Inspection</center>",
+    unsafe_allow_html=True
+)
+
+
