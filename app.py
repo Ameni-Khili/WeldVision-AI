@@ -598,18 +598,19 @@ st.dataframe(details, use_container_width=True)
 
 csv_data = details.to_csv(index=False).encode("utf-8")
 
-st.download_button(
-"⬇️ Download Detection Results CSV",
-csv_data,
-"welding_detection.csv",
-"text/csv"
-                )
-        else:
-         st.success(
-         "No objects detected at the selected confidence threshold."
-                )
+            st.download_button(
+                "⬇️ Download Detection Results CSV",
+                csv_data,
+                "welding_detection.csv",
+                "text/csv"
+            )
 
-# PDF inspection report
+        else:
+            st.success(
+                "No objects detected at the selected confidence threshold."
+            )
+
+        # PDF inspection report
 st.divider()
 st.markdown("### 📄 Inspection Report")
 
