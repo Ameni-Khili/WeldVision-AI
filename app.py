@@ -605,25 +605,25 @@ csv_data,
 "text/csv"
                 )
 
-            else:
-                st.success(
-                    "No objects detected at the selected confidence threshold."
+else:
+st.success(
+"No objects detected at the selected confidence threshold."
                 )
 
-            # PDF inspection report
-            st.divider()
-            st.markdown("### 📄 Inspection Report")
+# PDF inspection report
+st.divider()
+st.markdown("### 📄 Inspection Report")
 
-            pdf_data = generate_pdf_report(data)
+pdf_data = generate_pdf_report(data)
 
-            st.download_button(
-                label="📥 Download Inspection Report (PDF)",
-                data=pdf_data,
-                file_name="WeldVision_Inspection_Report.pdf",
-                mime="application/pdf",
-                type="primary",
-                use_container_width=True,
-                key="download_inspection_pdf"
+st.download_button(
+label="📥 Download Inspection Report (PDF)",
+data=pdf_data,
+file_name="WeldVision_Inspection_Report.pdf",
+mime="application/pdf",
+type="primary",
+use_container_width=True,
+key="download_inspection_pdf"
             )
 
 
